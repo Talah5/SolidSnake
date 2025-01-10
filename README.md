@@ -51,18 +51,22 @@ SolidSnake est un projet de recherche en sécurité offensive. Ce projet combine
 -```bash
    git clone https://github.com/Talah5/SolidSnake.git
    cd SolidSnake
+   '''
 
 ### 2. **Compilez le projet** : 
     -'''bash
     make
+    '''
 
 ### 3. **Exécutez le programme** : 
     -'''bash
     ./solid_snake
+    '''
 
 ### 4. **Nettoyez les fichiers compilés (optionnel)** :
     '''bash
     make clean
+    '''
 
 ## **Utilisation**
 
@@ -77,6 +81,7 @@ SolidSnake est un projet de recherche en sécurité offensive. Ce projet combine
 
 ## **Structure du projet** 
 
+'''bash
 SolidSnake/
 ├── src/
 │   ├── main.c                       # Point d'entrée du programme
@@ -105,8 +110,8 @@ SolidSnake/
 ├── Makefile                         # Automatisation de la compilation
 ├── README.md                        # Présentation du projet
 └── LICENSE                          # Licence du projet
-
-## **Doucmentation**
+'''
+## **Documentation**
 
     - LD_PRELOAD : docs/ld_preload.md
     - Threads : docs/threads.md
