@@ -49,13 +49,13 @@ SolidSnake est un projet de recherche en sécurité offensive. Ce projet combine
 
 ### 1. **Clonez le dépôt** :
 ```bash
-   git clone https://github.com/Talah5/SolidSnake.git
-   cd SolidSnake
+git clone https://github.com/Talah5/SolidSnake.git
+cd SolidSnake
 ```
 
 ### 2. **Compilez le projet** : 
 ```bash
-      make
+make
 ```
 
 ### 3. **Exécutez le programme** : 
