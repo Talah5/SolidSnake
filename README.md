@@ -48,25 +48,25 @@ SolidSnake est un projet de recherche en sécurité offensive. Ce projet combine
 ## **Installation et Compilation**
 
 ### 1. **Clonez le dépôt** :
--```bash
+```bash
    git clone https://github.com/Talah5/SolidSnake.git
    cd SolidSnake
-   '''
+```
 
 ### 2. **Compilez le projet** : 
-    -'''bash
-    make
-    '''
+```bash
+      make
+```
 
 ### 3. **Exécutez le programme** : 
-    -'''bash
-    ./solid_snake
-    '''
+```bash
+./solid_snake
+```
 
 ### 4. **Nettoyez les fichiers compilés (optionnel)** :
-    '''bash
-    make clean
-    '''
+```bash
+make clean
+```
 
 ## **Utilisation**
 
@@ -79,38 +79,7 @@ SolidSnake est un projet de recherche en sécurité offensive. Ce projet combine
 - L'option 3 configure une technique de persistance.
 - L'option 4 teste une méthode de dissimulation.
 
-## **Structure du projet** 
 
-'''bash
-SolidSnake/
-├── src/
-│   ├── main.c                       # Point d'entrée du programme
-│   ├── ld_preload.c                 # Implémentation du malware LD_PRELOAD
-│   ├── c2_server.c                  # Serveur C2 multi-threadé
-│   ├── c2_client.c                  # Client pour le C2
-│   ├── persistence.c                # Techniques de persistance
-│   ├── dissimulation.c              # Techniques de dissimulation
-│   ├── utils.c                      # Fonctions utilitaires
-│   ├── headers/                     # Fichiers d'en-tête (.h)
-│       ├── ld_preload.h
-│       ├── c2.h
-│       ├── persistence.h
-│       ├── dissimulation.h
-│       ├── utils.h
-├── tests/
-│   ├── test_ld_preload.c            # Tests pour LD_PRELOAD
-│   ├── test_c2.c                    # Tests pour le C2
-│   ├── test_persistence.c           # Tests pour la persistance
-│   ├── test_dissimulation.c         # Tests pour la dissimulation
-├── docs/
-│   ├── ld_preload.md                # Documentation sur LD_PRELOAD
-│   ├── threads.md                   # Documentation sur les threads
-│   ├── persistence.md               # Documentation sur la persistance
-│   ├── dissimulation.md             # Documentation sur la dissimulation
-├── Makefile                         # Automatisation de la compilation
-├── README.md                        # Présentation du projet
-└── LICENSE                          # Licence du projet
-'''
 ## **Documentation**
 
     - LD_PRELOAD : docs/ld_preload.md
