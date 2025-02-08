@@ -1,42 +1,45 @@
 # **LD_PRELOAD_Project**
 
 ## **Description**
-Ce projet utilise la technique de `LD_PRELOAD` pour intercepter et modifier le comportement des fonctions standard en C. Il permet d'exfiltrer des données interceptées vers un serveur Command & Control (C2) et propose également des mécanismes supplémentaires, comme le port knocking.
+Ce projet utilise la technique de `LD_PRELOAD` pour intercepter et modifier le comportement de fonctions standard en C, telles que `getpwnam` et `crypt`, afin de collecter des identifiants et des informations système. Ces données sont ensuite exfiltrées vers un serveur Command & Control (C2) après une séquence de port knocking pour sécuriser l'accès. Le projet inclut également un mécanisme de masquage de fichiers et permet au serveur C2 de gérer plusieurs clients simultanément.
+
 
 ---
 
 ## **Structure du projet**
-- **`src/`** : Contient le code source principal :
-  - `intercept.c` : Interception des fonctions `SSL_read` et `SSL_write`.
-  - `exfiltration.c` : Gestion de l'exfiltration des données vers le serveur C2.
-  - `c2_server.c` : Serveur C2 pour recevoir les données interceptées.
-  - `port_knocking.c` : Implémentation du port knocking.
-  - `utils.c` : Fonctions utilitaires.
-- **`include/`** : Fichiers d'en-tête pour le code source.
-- **`build/`** : Contient les fichiers compilés (`.o`, `.so`, exécutables).
-- **`tests/`** : Scripts et programmes pour tester les différentes fonctionnalités.
+- **`client_malware/`** : Contient le code source du malware
+  - `credentials.c` : Effectue un "port knocking" et exfiltre des informations locales et des identifiants vers un serveur distant.
+  - `lib_hide_file.c` : Gestion de l'exfiltration des données vers le serveur C2
+  - `Makefile`: Compilation du malware
+  - **`include/`** : Fichiers d'en-tête pour le code source :
+    - `credentials.h`: Header du malware
+- **`server_C2/`** : Contient le code source du serveur C2
+  - `c2_server.c` : Gère les connexions des malwares, écoute les knocks et traite les données exfiltrées
+  - `Makefile`: Compilation du serveur
 - **`docs/`** : Documentation technique (ex. : architecture, explications détaillées).
 
 ---
 
 ## **Fonctionnalités**
-- Interception des fonctions standard (`SSL_read`, `SSL_write`) via `LD_PRELOAD`.
-- Envoi des données interceptées à un serveur C2 via un socket TCP.
-- Serveur C2 capable de gérer plusieurs clients simultanément.
-- Mécanisme de port knocking pour sécuriser l'accès.
+- Interception des fonctions standard comme `getpwnam` et `crypt` pour collecter des identifiants via `LD_PRELOAD`.
+- Envoi des informations collectées au serveur C2 après une séquence de port knocking.
+- Serveur C2 capable de gérer plusieurs clients simultanément après avoir validé la séquence de port knocking.
+- Mécanisme de port knocking (sur les ports 1234, 2345, 3456) pour sécuriser l'accès et activer le serveur C2.
+- Masquage du fichier `solidsnake` via `lib_hide_file.c` pour éviter sa détection.
 
 ---
 
 ## **Prérequis**
-Avant de commencer, assurez-vous que les outils suivants sont installés sur votre système :
+Avant de commencer, assurez-vous que les outils et bibliothèques suivants sont installés sur votre système :
 - **GCC** (compilateur)
-- **OpenSSL** (bibliothèque nécessaire pour intercepter `SSL_read` et `SSL_write`)
-- **Make**
+- **Make** (outil de gestion de la compilation)
+- **libc6-dev** (pour les outils de développement de la bibliothèque standard)
+- **libssl-dev** (bibliothèque nécessaire pour les manipulations liées à `crypt`)
 
-Pour installer OpenSSL :
+Pour installer les dépendances nécessaires, exécutez :
 ```bash
 sudo apt update
-sudo apt install libssl-dev
+sudo apt-get install build-essential libc6-dev libssl-dev
 ```
 
 ---
@@ -46,12 +49,20 @@ Pour compiler le projet, exécutez la commande suivante dans le répertoire du p
 ```bash
 make
 ```
+### **Partie Client** 
 
-Cela génère :
-- **`build/intercept.so`** : La bibliothèque partagée pour `LD_PRELOAD`.
-- **`build/c2_server`** : L'exécutable du serveur C2.
+Cela générera les fichiers suivants pour le client :
 
-Pour nettoyer les fichiers compilés :
+- **`build/libhide_file.so`**  : La bibliothèque partagée pour intercepter et masquer le fichier `solidsnake` via `LD_PRELOAD`.
+- **`build/credentials.so`**  : La bibliothèque partagée pour intercepter les fonctions standard (`getpwnam`, `crypt`) et exfiltrer les données.
+
+### **Partie Serveur**
+
+Cela générera également le fichier suivant pour le serveur :
+
+- **`build/c2_server`** : L'exécutable du serveur C2, qui gère les connexions des malwares et traite les données exfiltrées.
+
+Pour nettoyer les fichiers compilés et le répertoire build :
 ```bash
 make clean
 ```
@@ -61,44 +72,58 @@ make clean
 ## **Exécution**
 
 ### **1. Lancer le serveur C2**
-Dans un terminal, exécutez le serveur C2 pour écouter les connexions :
+Dans un terminal côté machine serveur, exécutez le serveur C2 pour écouter les connexions :
 ```bash
-./build/c2_server
+make run_c2
 ```
 
-### **2. Tester l'interception**
-Dans un autre terminal, utilisez `LD_PRELOAD` pour intercepter les appels :
+### **2. Stopper SSH côté malware**
+Sur la machine infectée (malware), arrêtez le service SSH :
 ```bash
-LD_PRELOAD=./build/intercept.so curl -v https://example.com
+sudo systemctl stop ssh
 ```
 
-### **3. Vérifier le serveur**
-Les données interceptées doivent apparaître dans le terminal où tourne le serveur C2.
+### **3. Tester l'interception**
+Dans un terminal côté malware, utilisez LD_PRELOAD pour intercepter les appels lors du démarrage de SSH :
+```bash
+sudo LD_PRELOAD=/chemin/vers/intercept.so /usr/sbin/sshd -D
+```
+Si une erreur s'affiche, créez directement le fichier nécessaire :
 
----
+```bash
+sudo mkdir -p /run/sshd
+```
+### **4. Lancer la connexion depuis une troisième machine**
+Utilisez SSH pour vous connecter à l'adresse IP de votre machine infectée :
 
-## **Tests**
-Des tests automatisés sont disponibles dans le répertoire `tests/`. Voici quelques exemples :
-- **Test de la bibliothèque `intercept.so`** :
-  ```bash
-  LD_PRELOAD=./build/intercept.so curl https://example.com
-  ```
+```bash
+ssh user@<IP_de_votre_machine_infectée>
+```
+### **5. Vérifier le serveur C2**
 
-- **Test unitaire de l'exfiltration** :
-  Compilez et exécutez :
-  ```bash
-  make
-  ./build/test_exfiltration
-  ```
+Les données interceptées (comme les identifiants et informations système) doivent apparaître dans le terminal où tourne le serveur C2. Une fois les données interceptées, un fichier nommé `infected_hosts.txt` sera créé et contiendra toutes les informations récupérées.
 
+### **6. LD_PRELOAD caché dans  pour le fichier solidsnake dans `/etc/ld.so.preload`**
+Si tu veux que `LD_PRELOAD` soit chargé à chaque exécution de programme, pour cacher le fichier `solidsnake`, ajoute le chemin du `.so` dans `/etc/ld.so.preload` :
+```bash
+echo "/chemin/vers/intercept.so" | sudo tee -a /etc/ld.so.preload
+```
+**Avantage** :
 
+  Appliqué à tout le système, même pour l'utilisateur root.
+
+**ATTENTION** :
+
+  Si le `.so` a une erreur, tout le système peut devenir inutilisable !
+
+**Sécurise en gardant une sauvegarde** :
+```bash
+cp /etc/ld.so.preload /etc/ld.so.preload.bak
+```
 ---
 
 ## **Contributeurs**
 - **Talah5**
 
 ---
-
-## **Licence**
-Ajoute ici la licence de ton projet (ex. : MIT, GPL).
 
